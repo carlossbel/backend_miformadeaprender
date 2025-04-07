@@ -2,16 +2,17 @@
 const { initializeApp } = require('firebase/app');
 const { getFirestore } = require('firebase/firestore');
 const { getAuth } = require('firebase/auth');
+const admin = require('firebase-admin');
 
-// Firebase configuration with environment variables
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY || "AIzaSyAPEUiI0EN_D-Ro4uOrzc94YmKk-LqBNjw",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "miformadeaprender-df31f.firebaseapp.com",
-  projectId: process.env.FIREBASE_PROJECT_ID || "miformadeaprender-df31f",
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "miformadeaprender-df31f.firebasestorage.app",
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "346102753118",
-  appId: process.env.FIREBASE_APP_ID || "1:346102753118:web:58d29fa730a1b53b4e11cf",
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID || "G-L6PHTQEWGR"
+  apiKey: "AIzaSyAPEUiI0EN_D-Ro4uOrzc94YmKk-LqBNjw",
+  authDomain: "miformadeaprender-df31f.firebaseapp.com",
+  projectId: "miformadeaprender-df31f",
+  storageBucket: "miformadeaprender-df31f.firebasestorage.app",
+  messagingSenderId: "346102753118",
+  appId: "1:346102753118:web:58d29fa730a1b53b4e11cf",
+  measurementId: "G-L6PHTQEWGR"
 };
 
 // Initialize Firebase
@@ -19,8 +20,28 @@ const app = initializeApp(firebaseConfig);
 const firestore = getFirestore(app);
 const auth = getAuth(app);
 
+// Initialize Firebase Admin
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // Parse the JSON string from environment variable
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  // Fallback for local development
+  try {
+    serviceAccount = require('../serviceAccountKey.json');
+  } catch (error) {
+    console.error('Service account file not found, and FIREBASE_SERVICE_ACCOUNT env var not set');
+    throw error;
+  }
+}
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 module.exports = {
   firestore,
   auth,
-  app
+  app,
+  admin
 };
