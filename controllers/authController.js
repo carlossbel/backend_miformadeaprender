@@ -33,9 +33,16 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Crear usuario en Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
+    let uid = 'temp-' + Date.now();
+    
+    try {
+      // Intentar crear usuario en Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      uid = userCredential.user.uid;
+    } catch (authError) {
+      console.error('Error en el registro con Firebase Auth:', authError);
+      // Continuar con el flujo principal incluso si hay un error en Firebase Auth
+    }
 
     // Generar hash de la contraseña para almacenar en Firestore
     const hash = await bcrypt.hash(password, 10);
@@ -46,7 +53,7 @@ exports.register = async (req, res) => {
       email,
       password: hash, // Guardamos el hash para poder verificar contraseñas en login
       type: 1, // Tipo 1 = tutor/admin
-      uid: uid, // ID de Firebase Authentication
+      uid: uid, // ID de Firebase Authentication o temporal
       created_at: new Date()
     };
 
@@ -90,9 +97,16 @@ exports.registerProfesor = async (req, res) => {
       });
     }
 
-    // Crear usuario en Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
+    let uid = 'temp-' + Date.now();
+    
+    try {
+      // Intentar crear usuario en Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      uid = userCredential.user.uid;
+    } catch (authError) {
+      console.error('Error en el registro de profesor con Firebase Auth:', authError);
+      // Continuar con el flujo principal incluso si hay un error en Firebase Auth
+    }
 
     // Generar hash de la contraseña
     const hash = await bcrypt.hash(password, 10);
@@ -180,8 +194,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Usuario o contraseña incorrectos' });
     }
 
-    // Si el usuario tiene uid, validar con Firebase Auth
-    if (user.uid) {
+    // Si el usuario tiene uid y no es temporal, validar con Firebase Auth
+    if (user.uid && !user.uid.startsWith('temp-')) {
       try {
         // Intentamos iniciar sesión en Firebase Auth
         await signInWithEmailAndPassword(auth, user.email, password);
@@ -191,13 +205,16 @@ exports.login = async (req, res) => {
       }
     }
 
+    // Asegurarse de que el tipo sea un número antes de enviarlo
+    const userType = typeof user.type === 'string' ? parseInt(user.type, 10) : user.type;
+
     // Responder con el usuario, incluyendo el id y el type
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
       user: {
         id: user.id,
         username: user.username,
-        type: user.type,
+        type: userType,
       }
     });
   } catch (error) {

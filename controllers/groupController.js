@@ -20,18 +20,23 @@ exports.registerGrupo = async (req, res) => {
     if (!existingGroup) {
       // Crear el grupo si no existe
       existingGroup = await Group.create({ grupo });
+      console.log('Grupo creado:', existingGroup);
+    } else {
+      console.log('Grupo existente:', existingGroup);
     }
     
     // Verificar si el profesor existe
     const professor = await User.findById(profesor);
     if (!professor) {
+      console.log('Profesor no encontrado:', profesor);
       return res.status(404).json({
         message: 'El profesor especificado no existe.',
       });
     }
     
     // Asignar el profesor al grupo
-    await Group.assignTeacher(existingGroup.id, profesor);
+    const updatedGroup = await Group.assignTeacher(existingGroup.id, profesor);
+    console.log('Grupo actualizado:', updatedGroup);
 
     res.status(201).json({ 
       message: 'Registro de grupo y profesor exitoso',
@@ -46,9 +51,11 @@ exports.registerGrupo = async (req, res) => {
 // Obtener todos los grupos
 exports.getUniqueGroups2 = async (req, res) => {
   try {
+    console.log('Obteniendo todos los grupos');
     const groups = await Group.getAll();
     
     if (groups.length === 0) {
+      console.log('No se encontraron grupos');
       return res.status(404).json({ error: 'No se encontraron grupos' });
     }
     
@@ -57,6 +64,7 @@ exports.getUniqueGroups2 = async (req, res) => {
       grupo: group.grupo
     }));
     
+    console.log('Grupos encontrados:', formattedGroups);
     return res.json({ grupos: formattedGroups });
   } catch (err) {
     console.error('Error al obtener los grupos:', err);
@@ -69,14 +77,20 @@ exports.getUniqueGroups = async (req, res) => {
   const { id } = req.params;
   
   if (!id) {
+    console.log('ID del profesor no proporcionado');
     return res.status(400).json({ error: 'El ID del profesor es requerido' });
   }
   
+  console.log('Obteniendo grupos para el profesor:', id);
+  
   try {
+    // Intentar obtener grupos asignados al profesor
     const groups = await Group.getByProfessor(id);
     
-    if (groups.length === 0) {
-      return res.status(404).json({ error: 'No se encontraron grupos asociados al profesor' });
+    if (!groups || groups.length === 0) {
+      console.log('No se encontraron grupos para el profesor:', id);
+      // Si no se encuentran grupos, devolver un array vacío en lugar de un error
+      return res.json({ grupos: [] });
     }
     
     // Formatear la respuesta para mantener compatibilidad
@@ -84,6 +98,7 @@ exports.getUniqueGroups = async (req, res) => {
       grupo: group.grupo
     }));
     
+    console.log('Grupos encontrados para el profesor:', formattedGroups);
     return res.json({ grupos: formattedGroups });
   } catch (err) {
     console.error('Error al obtener los grupos del profesor:', err);
