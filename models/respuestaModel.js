@@ -1,6 +1,6 @@
 // models/respuestaModel.js
 const { firestore } = require('../config/firebase');
-const { collection, query, where, getDocs, addDoc, orderBy } = require('firebase/firestore');
+const { collection, query, where, getDocs, addDoc, orderBy, Timestamp } = require('firebase/firestore');
 
 class Respuesta {
   // Guarda una nueva respuesta
@@ -9,7 +9,7 @@ class Respuesta {
       const respuestasRef = collection(firestore, 'respuestas');
       const dataWithTimestamp = {
         ...respuestaData,
-        created_at: new Date()
+        created_at: Timestamp.now()
       };
       
       const docRef = await addDoc(respuestasRef, dataWithTimestamp);
@@ -24,11 +24,13 @@ class Respuesta {
   static async getByUserId(userId) {
     try {
       const respuestasRef = collection(firestore, 'respuestas');
+      
+      // Crear consulta sin orderBy inicialmente
       const q = query(
         respuestasRef, 
-        where('id_user', '==', userId),
-        orderBy('created_at', 'asc')
+        where('id_user', '==', userId)
       );
+      
       const querySnapshot = await getDocs(q);
       
       return querySnapshot.docs.map(doc => ({
@@ -42,20 +44,17 @@ class Respuesta {
   }
 
   // Calcula resultados para predicción de estilo de aprendizaje
-  // Esta es una versión simplificada, ya que la regresión lineal compleja
-  // sería mejor implementada con bibliotecas especializadas
   static async calculatePrediction(userId, points) {
     try {
       // Esta función simula el cálculo de predicción basado en los puntos
-      // En un caso real, podrías usar TensorFlow.js u otra biblioteca
       
       const { visual, auditivo, kinestesico } = points;
       const total = visual + auditivo + kinestesico;
       
       // Cálculos simplificados para la demostración
-      const visualPred = (visual / total * 100).toFixed(2);
-      const auditivoPred = (auditivo / total * 100).toFixed(2);
-      const kinestesicoPred = (kinestesico / total * 100).toFixed(2);
+      const visualPred = total > 0 ? (visual / total * 100).toFixed(2) : '0.00';
+      const auditivoPred = total > 0 ? (auditivo / total * 100).toFixed(2) : '0.00';
+      const kinestesicoPred = total > 0 ? (kinestesico / total * 100).toFixed(2) : '0.00';
       
       // Guardar resultados
       const resultadosRef = collection(firestore, 'resultados');
@@ -69,7 +68,7 @@ class Respuesta {
           Y: [visualPred, auditivoPred, kinestesicoPred],
           modelo: 'Cálculo Simplificado'
         }),
-        created_at: new Date()
+        created_at: Timestamp.now()
       };
       
       const docRef = await addDoc(resultadosRef, resultadoData);
@@ -84,11 +83,13 @@ class Respuesta {
   static async getResultadosByUserId(userId) {
     try {
       const resultadosRef = collection(firestore, 'resultados');
+      
+      // Crear consulta sin orderBy inicialmente
       const q = query(
         resultadosRef, 
-        where('id_user', '==', userId),
-        orderBy('created_at', 'desc')
+        where('id_user', '==', userId)
       );
+      
       const querySnapshot = await getDocs(q);
       
       return querySnapshot.docs.map(doc => ({
