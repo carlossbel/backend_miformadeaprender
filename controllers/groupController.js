@@ -54,18 +54,13 @@ exports.getUniqueGroups2 = async (req, res) => {
     console.log('Obteniendo todos los grupos');
     const groups = await Group.getAll();
     
-    if (groups.length === 0) {
-      console.log('No se encontraron grupos');
-      return res.status(404).json({ error: 'No se encontraron grupos' });
-    }
-    
     // Formatear la respuesta para mantener compatibilidad con la API anterior
     const formattedGroups = groups.map(group => ({
       grupo: group.grupo
     }));
     
     console.log('Grupos encontrados:', formattedGroups);
-    return res.json({ grupos: formattedGroups });
+    return res.status(200).json({ grupos: formattedGroups }); // Siempre devuelve 200, incluso con array vacío
   } catch (err) {
     console.error('Error al obtener los grupos:', err);
     return res.status(500).json({ error: 'Error al obtener los grupos' });
