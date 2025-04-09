@@ -16,7 +16,8 @@
         "express": "^4.21.2",
         "firebase": "^9.23.0",
         "firebase-admin": "^13.2.0",
-        "node-cron": "^3.0.3"
+        "node-cron": "^3.0.3",
+        "regression": "^2.0.1"
     },
     "devDependencies": {
         "nodemon": "^2.0.22"
